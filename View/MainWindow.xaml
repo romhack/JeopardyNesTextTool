@@ -1,0 +1,133 @@
+﻿<Window x:Class="JeopardyNesTextTool.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:model="clr-namespace:JeopardyNesTextTool.Model"
+        xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:viewModel="clr-namespace:JeopardyNesTextTool.ViewModel"
+        mc:Ignorable="d"
+        Title="NES Jeopardy text tool" Height="450" Width="800"
+        Icon="Jeopardy.png">
+
+
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="180" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" >
+            <StackPanel.Resources>
+                <Style x:Key="ImageEnabled" TargetType="Image">
+                    <Style.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.25"></Setter>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Resources>
+            <Button ToolTip="Open script file" Command="{Binding CommandsManager.OpenCommand}" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                <Image Source="OpenFile.png" Stretch="None" HorizontalAlignment="Left" Style="{StaticResource ImageEnabled}"/>
+            </Button>
+            <Button ToolTip="Save script file" Command="{Binding CommandsManager.SaveCommand}" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                <Image Source="Save.png" Stretch="None" HorizontalAlignment="Left" Style="{StaticResource ImageEnabled}"/>
+            </Button>
+            <Button ToolTip="Save and insert script file in destination ROM" Command="{Binding CommandsManager.InsertCommand}" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                <Image Source="Insert.png" Stretch="None" HorizontalAlignment="Left" Style="{StaticResource ImageEnabled}"/>
+            </Button>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
+
+            <Button ToolTip="Select ROM and extract script" Command="{Binding CommandsManager.ExtractCommand}" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                <Image Source="Extract.png" Stretch="None" HorizontalAlignment="Left" Style="{StaticResource ImageEnabled}"/>
+            </Button>
+            <Button ToolTip="Set destination ROM file for script insert" Command="{Binding CommandsManager.SetRomCommand}" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                <Image Source="SetRom.png" Stretch="None" HorizontalAlignment="Left" Style="{StaticResource ImageEnabled}"/>
+            </Button>
+        </StackPanel>
+
+        <TreeView Grid.Column="0" Grid.Row="1" x:Name="TreeView" ItemsSource="{Binding ViewModelBlocks}" >
+            <b:Interaction.Triggers>
+                <b:EventTrigger EventName="SelectedItemChanged">
+                    <b:InvokeCommandAction Command="{Binding SelectedItemChangedCommand}" CommandParameter="{Binding ElementName=TreeView, Path=SelectedItem}"/>
+                </b:EventTrigger>
+            </b:Interaction.Triggers>
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding ViewModelTopics}" DataType="viewModel:ViewModelBlock">
+                    <TextBlock Text="{Binding Name}" />
+                    <HierarchicalDataTemplate.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding ViewModelQuestions}" DataType="viewModel:ViewModelTopic">
+                            <TextBlock Text="{Binding Name}" />
+                            <HierarchicalDataTemplate.ItemTemplate>
+                                <DataTemplate DataType="viewModel:ViewModelQuestion">
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </HierarchicalDataTemplate.ItemTemplate>
+                        </HierarchicalDataTemplate>
+                    </HierarchicalDataTemplate.ItemTemplate>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+        <StackPanel Grid.Column="1" Grid.Row="1" Margin="5,0,5,0" >
+            <StackPanel.Resources>
+                <viewModel:TerminatedToUnterminatedStringConverter x:Key="TerminatedConverter"/>
+                <viewModel:PronounsNames x:Key="PronounsNames"/>
+                <DataTemplate DataType="{x:Type model:StructuredTextBlock}">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Final topic"/>
+                        <TextBox Text="{Binding  FinalTopic.Name, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource TerminatedConverter}}"/>
+                        <TextBlock Text="Presenter's text"/>
+                        <TextBox Text="{Binding  FinalTopic.Question.Text, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource TerminatedConverter}}"/>
+                        <TextBlock Text="Pronoun index"/>
+                        <ComboBox 
+                            SelectedIndex="{Binding  FinalTopic.Question.PronounIndex, UpdateSourceTrigger=PropertyChanged}" 
+                            ItemsSource="{StaticResource PronounsNames}">
+                        </ComboBox>
+                        <TextBlock Text="Player's reply"/>
+                        <TextBox Text="{Binding  FinalTopic.Question.Answer, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource TerminatedConverter}}"/>
+                    </StackPanel>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type model:Topic}">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Topic name"/>
+                        <TextBox xml:space="preserve" Text="{Binding  Name, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource TerminatedConverter}}"/>
+                    </StackPanel>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type model:Question}">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Presenter's text"/>
+                        <TextBox Text="{Binding  Text, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource TerminatedConverter}}"/>
+                        <TextBlock Text="Pronoun index"/>
+                        <ComboBox 
+                            SelectedIndex="{Binding  PronounIndex, UpdateSourceTrigger=PropertyChanged}" 
+                            ItemsSource="{StaticResource PronounsNames}">
+                        </ComboBox>
+                        <TextBlock Text="Player's reply"/>
+                        <TextBox Text="{Binding  Answer, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource TerminatedConverter}}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </StackPanel.Resources>
+            <ContentPresenter Content="{Binding SelectedBlock}"/>
+        </StackPanel>
+        <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Grid.Column="0">
+            <StatusBar>
+                <StatusBar.Resources>
+                    <viewModel:ShortPathConverter x:Key="ShortPathConverter"/>
+                </StatusBar.Resources>
+                <StatusBarItem>
+                    <TextBlock Text="{Binding ScriptFilePath, UpdateSourceTrigger=PropertyChanged, StringFormat=Script path: {0}, Converter={StaticResource ShortPathConverter}}"></TextBlock>
+                </StatusBarItem>
+                <Separator></Separator>
+                <StatusBarItem>
+                    <TextBlock Text="{Binding ViewModelConfig.DestinationRomPath, StringFormat=Insert ROM path: {0}, Converter={StaticResource ShortPathConverter}}"></TextBlock>
+                </StatusBarItem>
+            </StatusBar>
+        </DockPanel>
+    </Grid>
+</Window>
